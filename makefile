@@ -88,6 +88,9 @@ rm : stop
 run :
 	docker run --rm -it $(NAMEFLAGS) $(RUNFLAGS) $(PORTFLAGS) $(MOUNTFLAGS) $(OTHERFLAGS) $(IMAGETAG)
 
+player :
+	docker exec -it docker_$(CNTNAME) ncmpcpp
+
 rshell :
 	docker exec -u root -it docker_$(CNTNAME) $(SHCOMMAND)
 

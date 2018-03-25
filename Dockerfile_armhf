@@ -14,7 +14,7 @@ RUN set -xe \
     && adduser -u ${PUID} -G mpd -h /home/mpd -D mpd \
     && addgroup pulse \
     && adduser mpd pulse \
-    && apk add -Uu --no-cache --purge mpd mpc libmpdclient ympd mpdscribble alsa-lib alsa-utils pulseaudio-libs alsa-plugins-pulse \
+    && apk add -Uu --no-cache --purge mpd mpc libmpdclient ympd ncmpcpp mpdscribble alsa-lib alsa-utils pulseaudio-libs alsa-plugins-pulse \
     && rm -rf /var/cache/apk/* /tmp/*
 #
 COPY root/ /
