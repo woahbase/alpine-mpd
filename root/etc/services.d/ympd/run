@@ -1,0 +1,3 @@
+#!/usr/bin/with-contenv bash
+
+exec ympd -h localhost -p 6600 -w 64801

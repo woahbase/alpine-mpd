@@ -1,0 +1,26 @@
+ARG ARCH=frommakefile
+ARG DOCKERSRC=frommakefile
+ARG USERNAME=frommakefile
+#
+FROM ${USERNAME}/${DOCKERSRC}:${ARCH}
+#
+ARG PUID=1001
+ARG PGID=1001
+#
+RUN set -xe \
+    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community/" >> /etc/apk/repositories \
+    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing/" >> /etc/apk/repositories \
+    && addgroup -g ${PGID} -S mpd \
+    && adduser -u ${PUID} -G mpd -h /home/mpd -D mpd \
+    && addgroup pulse \
+    && adduser mpd pulse \
+    && apk add -Uu --no-cache --purge mpd mpc libmpdclient ympd mpdscribble alsa-lib alsa-utils pulseaudio-libs alsa-plugins-pulse \
+    && rm -rf /var/cache/apk/* /tmp/*
+#
+COPY root/ /
+#
+# VOLUME /var/lib/mpd/
+#
+EXPOSE 6600 8000 64801
+#
+ENTRYPOINT ["/init"]
