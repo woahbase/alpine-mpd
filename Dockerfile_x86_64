@@ -12,9 +12,9 @@ RUN set -xe \
     && adduser -u ${PUID} -G mpd -h /home/mpd -D mpd \
     && addgroup pulse \
     && adduser mpd pulse \
-    && apk add -Uu --no-cache mpd mpc libmpdclient ympd mpdscribble alsa-lib alsa-utils pulseaudio-libs \
+    && apk add -Uu --no-cache --purge mpd mpc libmpdclient ympd mpdscribble alsa-lib alsa-utils pulseaudio-libs \
     && echo "http://dl-cdn.alpinelinux.org/alpine/edge/main/" >> /etc/apk/repositories \
-#     && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community/" >> /etc/apk/repositories \
+    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community/" >> /etc/apk/repositories \
     && echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing/" >> /etc/apk/repositories \
     && apk add -U --no-cache ncmpcpp alsa-plugins-pulse \
     && rm -rf /var/cache/apk/* /tmp/*
