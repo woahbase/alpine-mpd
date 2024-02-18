@@ -1,0 +1,20 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+sleep 2; # for mpd to start
+
+MPDSCRIBBLE_ARGS="${MPDSCRIBBLE_ARGS:- --host localhost --port 6600}";
+
+# only run if user has provided config (that contains login details)
+if [ -f /etc/mpdscribble.conf ];
+then
+    echo "Starting MPDScribble...";
+    s6-setuidgid ${S6_USER:-alpine} exec \
+        mpdscribble \
+        --no-daemon \
+        --conf /etc/mpdscribble.conf \
+        ${MPDSCRIBBLE_ARGS}
+else
+    echo "Skip starting MPDScribble without configuration.";
+    sleep infinity;
+fi;

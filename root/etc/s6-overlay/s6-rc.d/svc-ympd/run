@@ -1,0 +1,11 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+sleep 2; # for mpd to start
+
+YMPD_ARGS="${YMPD_ARGS:- -h localhost -p 6600 -w 64801}";
+
+echo "Starting YMPD...";
+s6-setuidgid ${S6_USER:-alpine} exec \
+    ympd \
+    ${YMPD_ARGS}

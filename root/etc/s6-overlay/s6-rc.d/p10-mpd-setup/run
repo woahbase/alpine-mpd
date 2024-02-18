@@ -1,0 +1,43 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+mkdir -p \
+    /var/lib/mpd/database \
+    /var/lib/mpd/playlists \
+    /var/log/mpd/ \
+    /var/run/mpd/ \
+    /music \
+    ;
+
+touch /var/lib/mpd/state;
+touch /var/lib/mpd/tag_cache;
+touch /var/log/mpd/mpd.log;
+touch /var/run/mpd/mpd.pid;
+touch /var/run/mpd/mpdscribble.pid;
+
+# ensure mpd conf exists
+if [ ! -f /etc/mpd.conf ];
+then
+    cp /defaults/mpd.conf /etc/mpd.conf;
+fi;
+
+# if [ -d /dev/snd ];
+# then
+#     setfacl -m u:${S6_USER:-alpine}:rw /dev/snd/*
+# fi;
+
+if [ -n "$PULSE_SERVER" ] && [ ! -f "/etc/asound.conf" ];
+then
+    cp /defaults/asound.conf /etc/asound.conf;
+fi
+
+chown -R ${S6_USER:-alpine} \
+    /etc/mpd.conf \
+    /var/lib/mpd \
+    /var/log/mpd \
+    /var/run/mpd \
+    ;
+
+chown ${S6_USER:-alpine} \
+    /music \
+    ;

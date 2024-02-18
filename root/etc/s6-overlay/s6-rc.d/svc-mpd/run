@@ -1,0 +1,9 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+MPD_ARGS="${MPD_ARGS:- --stdout}";
+
+s6-setuidgid ${S6_USER:-alpine} exec \
+    mpd \
+    ${MPD_ARGS} \
+    --no-daemon
