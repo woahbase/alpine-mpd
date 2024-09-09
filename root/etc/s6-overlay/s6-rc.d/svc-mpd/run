@@ -1,9 +1,13 @@
 #!/usr/bin/with-contenv bash
 set -e
 
+MPD_CONF="${MPD_CONF:-/etc/mpd.conf}";
 MPD_ARGS="${MPD_ARGS:- --stdout}";
 
-s6-setuidgid ${S6_USER:-alpine} exec \
+s6-setuidgid ${S6_USER:-alpine} \
+exec \
     mpd \
+    --no-daemon \
     ${MPD_ARGS} \
-    --no-daemon
+    ${MPD_CONF} \
+    ;

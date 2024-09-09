@@ -1,24 +1,45 @@
 #!/usr/bin/with-contenv bash
 set -e
 
+vecho () { if [ "${S6_VERBOSITY:-1}" -gt 0 ]; then echo "[$0] $@"; fi; }
+
+MPD_CONF="${MPD_CONF:-/etc/mpd.conf}";
+MPD_HOME="${MPD_HOME:-/var/lib/mpd}";
+MPDSCRIBBLE_CONF="${MPDSCRIBBLE_CONF:-/etc/mpdscribble.conf}";
+MUSIC_DIR="${MUSIC_DIR:-/music}";
+
+vecho "Ensure configuration directories exist.";
 mkdir -p \
-    /var/lib/mpd/database \
-    /var/lib/mpd/playlists \
+    ${MPD_HOME}/database \
+    ${MPD_HOME}/playlists \
+    $(dirname ${MPD_CONF}) \
     /var/log/mpd/ \
     /var/run/mpd/ \
-    /music \
+    ${MUSIC_DIR} \
     ;
 
-touch /var/lib/mpd/state;
-touch /var/lib/mpd/tag_cache;
+touch ${MPD_HOME}/state;
+touch ${MPD_HOME}/tag_cache;
 touch /var/log/mpd/mpd.log;
 touch /var/run/mpd/mpd.pid;
-touch /var/run/mpd/mpdscribble.pid;
+
+# only run if user has provided config
+if [ -f "${MPDSCRIBBLE_CONF}" ];
+then
+    vecho "Ensure MPDScribble PID file exists.";
+    touch /var/run/mpd/mpdscribble.pid;
+fi;
 
 # ensure mpd conf exists
-if [ ! -f /etc/mpd.conf ];
+if [ ! -f "${MPD_CONF}" ];
 then
-    cp /defaults/mpd.conf /etc/mpd.conf;
+    vecho "Setting up default configurations at ${MPD_CONF}.";
+    # cp /defaults/mpd.conf ${MPD_CONF};
+    sed \
+        -e "s|S6_USER|$S6_USER|g" \
+        -e "s|MPD_HOME|$MPD_HOME|g" \
+        -e "s|MUSIC_DIR|$MUSIC_DIR|g" \
+    /defaults/mpd.conf > ${MPD_CONF};
 fi;
 
 # if [ -d /dev/snd ];
@@ -28,16 +49,18 @@ fi;
 
 if [ -n "$PULSE_SERVER" ] && [ ! -f "/etc/asound.conf" ];
 then
+    vecho "Setting up default asound.conf.";
     cp /defaults/asound.conf /etc/asound.conf;
 fi
 
-chown -R ${S6_USER:-alpine} \
-    /etc/mpd.conf \
-    /var/lib/mpd \
+vecho "Fixing permissions.";
+chown -R ${S6_USER:-alpine}:${S6_USER:-alpine} \
+    ${MPD_CONF} \
+    ${MPD_HOME} \
     /var/log/mpd \
     /var/run/mpd \
     ;
 
 chown ${S6_USER:-alpine} \
-    /music \
+    ${MUSIC_DIR} \
     ;
