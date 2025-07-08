@@ -5,6 +5,8 @@ vecho () { if [ "${S6_VERBOSITY:-1}" -gt 0 ]; then echo "[$0] $@"; fi; }
 
 MPD_CONF="${MPD_CONF:-/etc/mpd.conf}";
 MPD_HOME="${MPD_HOME:-/var/lib/mpd}";
+MPD_LOGS="${MPD_LOGS:-/var/log/mpd}";
+MPD_GROUP="${MPD_GROUP:-$(id -gn ${S6_USER:-mpd})}";
 MPDSCRIBBLE_CONF="${MPDSCRIBBLE_CONF:-/etc/mpdscribble.conf}";
 MUSIC_DIR="${MUSIC_DIR:-/music}";
 
@@ -13,14 +15,14 @@ mkdir -p \
     ${MPD_HOME}/database \
     ${MPD_HOME}/playlists \
     $(dirname ${MPD_CONF}) \
-    /var/log/mpd/ \
+    ${MPD_LOGS} \
     /var/run/mpd/ \
     ${MUSIC_DIR} \
     ;
 
 touch ${MPD_HOME}/state;
 touch ${MPD_HOME}/tag_cache;
-touch /var/log/mpd/mpd.log;
+touch ${MPD_LOGS}/mpd.log;
 touch /var/run/mpd/mpd.pid;
 
 # only run if user has provided config
@@ -38,29 +40,52 @@ then
     sed \
         -e "s|S6_USER|$S6_USER|g" \
         -e "s|MPD_HOME|$MPD_HOME|g" \
-        -e "s|MUSIC_DIR|$MUSIC_DIR|g" \
+        -e "s|MPD_GROUP|$MPD_GROUP|g" \
+        -e "s|MPD_LOGS|$MPD_LOGS|g" \
+        -e "s|MPD_PORT|${MPD_PORT:-6600}|g" \
+        -e "s|MUSICDIR|$MUSIC_DIR|g" \
     /defaults/mpd.conf > ${MPD_CONF};
 fi;
 
 # if [ -d /dev/snd ];
 # then
-#     setfacl -m u:${S6_USER:-alpine}:rw /dev/snd/*
+#     setfacl -m u:${S6_USER:-mpd}:rw /dev/snd/*
 # fi;
 
-if [ -n "$PULSE_SERVER" ] && [ ! -f "/etc/asound.conf" ];
+if [ -n "$PULSE_SERVER" ] \
+&& [ ! -f "/etc/asound.conf" ] \
+&& [ "X${EUID}" == "X0" ]; # requires root
 then
     vecho "Setting up default asound.conf.";
     cp /defaults/asound.conf /etc/asound.conf;
 fi
 
-vecho "Fixing permissions.";
-chown -R ${S6_USER:-alpine}:${S6_USER:-alpine} \
-    ${MPD_CONF} \
-    ${MPD_HOME} \
-    /var/log/mpd \
-    /var/run/mpd \
-    ;
+if [ -z "${MPD_SKIP_PERMFIX}" ] \
+&& [ "X${EUID}" == "X0" ]; # requires root
+then
+    vecho "Fixing permissions.";
+    chown -R ${S6_USER:-mpd}:${PGID:-1000} \
+        "${MPD_CONF}" \
+        "${MPD_HOME}" \
+        "${MPD_LOGS}" \
+        /var/run/mpd \
+        ;
 
-chown ${S6_USER:-alpine} \
-    ${MUSIC_DIR} \
-    ;
+    # not running -R over musicfolder
+    chown ${S6_USER:-mpd}:${PGID:-1000} \
+        "${MUSIC_DIR}" \
+        ;
+fi;
+
+# may become cumbersome if MUSICFOLDER has large number of files
+if [ -n "${MPD_PERMFIX_MUSIC_DIR}" ] \
+&& [ "X${EUID}" == "X0" ]; # requires root
+then
+    vecho "Fixing permissions on ${MUSIC_DIR} files.";
+    find "${MUSIC_DIR}" \
+        \! -user ${S6_USER:-mpd} -exec \
+        chown --no-dereference \
+        ${S6_USER:-mpd}:${PGID:-1000} \
+        '{}' +;
+fi;
+

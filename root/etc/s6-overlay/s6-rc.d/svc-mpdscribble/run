@@ -1,7 +1,10 @@
 #!/usr/bin/with-contenv bash
 set -e
 
+
 vecho () { if [ "${S6_VERBOSITY:-1}" -gt 0 ]; then echo "[$0] $@"; fi; }
+usercmd () { if [ "X${EUID}" != "X0" ]; then ${1} "${@:2}"; else s6-setuidgid ${PUID:-1000}:${PGID:-1000} ${1} "${@:2}"; fi; }
+
 sleep 2; # for mpd to start
 
 MPDSCRIBBLE_CONF="${MPDSCRIBBLE_CONF:-/etc/mpdscribble.conf}";
@@ -11,7 +14,7 @@ MPDSCRIBBLE_ARGS="${MPDSCRIBBLE_ARGS:- --host localhost --port 6600}";
 if [ -f "${MPDSCRIBBLE_CONF}" ];
 then
     vecho "Starting MPDScribble...";
-    s6-setuidgid ${S6_USER:-alpine} \
+    usercmd \
     exec \
         mpdscribble \
         --no-daemon \

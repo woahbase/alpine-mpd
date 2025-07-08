@@ -9,6 +9,11 @@ ENV \
     S6_USERHOME=/var/lib/mpd
 #
 RUN set -xe \
+#
+    && userdel -rf alpine \
+    && addgroup -g ${PGID} -S ${S6_USER} \
+    && adduser -u ${PUID} -G ${S6_USER} -h ${S6_USERHOME} -s /bin/false -D ${S6_USER} \
+#
     && apk add -Uu --no-cache --purge \
         alsa-lib \
         alsa-plugins-pulse \
@@ -27,9 +32,10 @@ RUN set -xe \
     && mkdir -p /defaults \
     && mv /etc/mpd.conf /defaults/mpd.conf.default \
     && mv /etc/mpdscribble.conf /defaults/mpdscribble.conf.default \
-    && addgroup ${S6_USER} \
     && addgroup pulse \
+    && adduser ${S6_USER} audio \
     && adduser ${S6_USER} pulse \
+    && chmod 1777 /var/run/mpd \
     && rm -rf /var/cache/apk/* /tmp/*
 #
 COPY root/ /
